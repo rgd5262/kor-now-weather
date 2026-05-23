@@ -106,15 +106,21 @@ export async function recommendActivities(locationName: string, weather: Weather
       );
     } catch (error) {
       const status = (error as { status?: number }).status;
-      const canFallback = status === 429 || status === 402 || !status || status >= 500;
-      if (!canFallback) {
+      console.warn("OpenRouter recommendation failed", { status: status ?? "network" });
+      if (!openAiKey) {
         throw error;
       }
     }
   }
 
   if (openAiKey) {
-    return callChatCompletion("https://api.openai.com/v1/chat/completions", openAiKey, "gpt-4o-mini", messages);
+    try {
+      return await callChatCompletion("https://api.openai.com/v1/chat/completions", openAiKey, "gpt-4o-mini", messages);
+    } catch (error) {
+      const status = (error as { status?: number }).status;
+      console.warn("OpenAI recommendation failed", { status: status ?? "network" });
+      throw error;
+    }
   }
 
   throw new Error("추천 서비스 환경변수가 설정되지 않았습니다.");
